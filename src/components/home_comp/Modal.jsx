@@ -10,8 +10,6 @@ import * as ethers from "ethers";
 
 import { abi, contractAddress } from "../../contexts/constants"
 
-import { channels } from "@epnsproject/frontend-sdk-staging";
-
 const {REACT_APP_CP_KEY, REACT_APP_WALLET, REACT_APP_ADMIN_WALLET} = process.env
 
 function MyVerticallyCenteredModal(props) {
@@ -40,6 +38,9 @@ function MyVerticallyCenteredModal(props) {
   const [isFetching, setIsFetching] = useState(false);
 
   const handleClose = () => setShowError(false);
+  // var { account, library, chainId } = useWeb3React();
+  // console.log('--------library------------------->')
+  // console.log(library)
 
   async function send() {
     console.log(`Sending...`)
@@ -101,14 +102,18 @@ function MyVerticallyCenteredModal(props) {
 
       await send()
       await signup(signEmail, signPassword, signName, wallet)
-
-      await channels.optIn(
-        signer,
-        `${REACT_APP_WALLET}`,
-        5,
-        wallet,
-        {onSuccess: () => console.log("doneeeeeeeeeee")}
-      );
+      await PushAPI.channels.subscribe({
+        signer: signer,
+        channelAddress: `eip155:5:${REACT_APP_WALLET}`, // channel address in CAIP
+        userAddress: `eip155:5:${wallet}`, // user address in CAIP
+        onSuccess: () => {
+         console.log('opt in success');
+        },
+        onError: () => {
+          console.error('opt in error');
+        },
+        env: 'staging'
+      })
 
       await sendNotification()
 
@@ -126,22 +131,26 @@ function MyVerticallyCenteredModal(props) {
     setIsFetching(true);
     e.preventDefault()
 
-    const provider = new ethers.providers.Web3Provider(window.ethereum)
-    await provider.send('eth_requestAccounts', [])
-    const signer = provider.getSigner()
+    // const provider = new ethers.providers.Web3Provider(window.ethereum)
+    // await provider.send('eth_requestAccounts', [])
+    // const signer = provider.getSigner()
 
     console.log(signer)
-
     try {
       await login(logEmail, logPassword, wallet)
 
-      // await channels.optIn(
-      //   signer,
-      //   `${REACT_APP_WALLET}`,
-      //   5,
-      //   wallet,
-      //   {onSuccess: () => console.log("doneeeeeeeeeee")}
-      // );
+      // await PushAPI.channels.subscribe({
+      //   signer: signer,
+      //   channelAddress: `eip155:5:${REACT_APP_WALLET}`, // channel address in CAIP
+      //   userAddress: `eip155:5:${wallet}`, // user address in CAIP
+      //   onSuccess: () => {
+      //    console.log('opt in success');
+      //   },
+      //   onError: () => {
+      //     console.error('opt in error');
+      //   },
+      //   env: 'staging'
+      // })
 
       navigate("/profile")
     } catch(e) {
@@ -154,7 +163,6 @@ function MyVerticallyCenteredModal(props) {
   }
 
     return (
-
       <>
 
         <Modal show={showError} onHide={handleClose} id="error-modal">
